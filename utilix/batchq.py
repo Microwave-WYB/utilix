@@ -26,7 +26,7 @@ if not os.access(SCRATCH_DIR, os.W_OK):
 
 PARTITIONS: List[str] = ["dali", "lgrandi", "xenon1t", "broadwl", "kicp", "caslake", "build"]
 TMPDIR: Dict[str, str] = {
-    "dali": os.path.expanduser(f"/dali/lgrandi/{USER}/tmp"),
+    "dali": f"/dali/lgrandi/{USER}/tmp",
     "lgrandi": os.path.join(SCRATCH_DIR, "tmp"),
     "xenon1t": os.path.join(SCRATCH_DIR, "tmp"),
     "broadwl": os.path.join(SCRATCH_DIR, "tmp"),
