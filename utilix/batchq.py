@@ -4,12 +4,15 @@ This module provides utilities to generate and submit jobs to the SLURM queue.
 
 import datetime
 import os
-import subprocess
 import re
+import subprocess
 import tempfile
+from functools import wraps
 from typing import Any, Dict, List, Literal, Optional
+
 from pydantic import BaseModel, Field, validator
 from simple_slurm import Slurm  # type: ignore
+
 from utilix import logger
 
 USER: Optional[str] = os.environ.get("USER")
@@ -393,7 +396,9 @@ def submit_job(
     jobstring: str,
     exclude_lc_nodes: bool = True,
     log: str = "job.log",
-    partition: Literal["dali", "lgrandi", "xenon1t", "broadwl", "kicp", "caslake", "build"] = "xenon1t",
+    partition: Literal[
+        "dali", "lgrandi", "xenon1t", "broadwl", "kicp", "caslake", "build"
+    ] = "xenon1t",
     qos: str = "xenon1t",
     account: str = "pi-lgrandi",
     jobname: str = "somejob",
@@ -473,3 +478,22 @@ def count_jobs(string: str = "") -> int:
     output: str = subprocess.check_output(["squeue", "-u", str(USER)]).decode("utf-8")
     lines = output.split("\n")
     return len([job for job in lines if string in job])
+
+
+def job(func):
+    """
+    Decorator to run functions as Slurm jobs.
+
+    Args:
+        func (function): The function to decorate.
+
+    Returns:
+        function: The decorated function.
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        jobstring = f"python -c 'import sys; sys.path.insert(0, \".\"); from {func.__module__} import {func.__name__}; {func.__name__}(*{args}, **{kwargs})'"  # pylint: disable=line-too-long
+        submit_job(jobstring)
+
+    return wrapper
